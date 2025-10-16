@@ -1,0 +1,62 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ---- Virtual Environments ----
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# ---- Distribution / Packaging ----
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ---- Logs / Databases / Caches ----
+*.log
+*.sqlite3
+*.db
+.cache/
+*.pid
+
+# ---- Unit Test / Coverage ----
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+.pytest_cache/
+nosetests.xml
+
+# ---- IDE / Editor files ----
+# VS Code
+.vscode/
+
+# PyCharm / IntelliJ
+.idea/
+
+# ---- OS-specific ----
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+# Linux
+*~
+
+# ---- Misc ----
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+tmp/
+temp/
+
+# ---- Project-specific ----
+# Ignore local images and docs not needed in repo
+1.png
+2.png
+student_project_doc.html
