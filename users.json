@@ -9,6 +9,11 @@
             "user_id": "8a75faa1-3804-4a8e-9f94-db4bc895e7cb",
             "name": "mohamed",
             "password": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"
+        },
+        {
+            "user_id": "76d0b49b-d71f-4954-8a4b-cb70cd6b354f",
+            "name": "ali",
+            "password": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"
         }
     ]
 }
