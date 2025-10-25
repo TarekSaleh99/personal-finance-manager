@@ -22,7 +22,8 @@ dist/
 *.db
 .cache/
 *.pid
-
+*.json
+*.csv
 # ---- Unit Test / Coverage ----
 htmlcov/
 .tox/
@@ -60,3 +61,4 @@ temp/
 1.png
 2.png
 student_project_doc.html
+database/
