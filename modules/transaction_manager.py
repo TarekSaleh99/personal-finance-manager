@@ -1,6 +1,7 @@
 import csv
 import os
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 
 
 class TransactionManager:
@@ -39,9 +40,9 @@ class TransactionManager:
     def _validate_amount(self, amount):
         """Check that amount is a positive number."""
         try:
-            val = float(amount)
+            val = Decimal(amount)
             return val >= 0
-        except ValueError:
+        except (InvalidOperation, ValueError):
             return False
 
     def _validate_type(self, t_type):
@@ -120,116 +121,139 @@ class TransactionManager:
         except Exception as e:
             print(f"Error adding transaction: {e}")
 
+    # -------------------- READ TRANSACTIONS --------------------
+    def _read_transactions(self):
+        try:
+            with open(self.user_csv_path, "r") as f:
+                return list(csv.DictReader(f))
+        except Exception as e:
+            print(f"Error reading file: {e}")
+            return []
+
     # -------------------- LIST TRANSACTIONS --------------------
     def list_transactions(self):
         """Display all transactions."""
-        try:
-            with open(self.user_csv_path, "r") as f:
-                reader = csv.DictReader(f)
-                rows = list(reader)
-                if not rows:
-                    print("No transactions found.")
-                    return
+        rows = self._read_transactions()
+        if not rows:
+            print("No transactions found.")
+            return
 
-                print("\n--- Transactions ---")
-                for i, row in enumerate(rows, start=1):
-                    print(
-                        f"{i}. {row['Date']} | {row['Type']} | {row['Category']} | "
-                        f"{row['Amount']} | {row['Payment Method']} | {row['Description']}"
-                    )
-        except Exception as e:
-            print(f"Error reading transactions: {e}")
-
-    # -------------------- EDIT TRANSACTION --------------------
-    def edit_transaction(self, index):
-        """Edit an existing transaction by its index (1-based)."""
-        try:
-            with open(self.user_csv_path, "r", newline="") as f:
-                reader = list(csv.DictReader(f))
-
-            if index < 1 or index > len(reader):
-                print("❌ Invalid transaction number.")
-                return
-
-            transaction = reader[index - 1]
-            print("\n--- Editing Transaction ---")
-            print(f"Current: {transaction}")
-
-            # Input new values (skip empty)
-            new_date = input(f"New Date (YYYY-MM-DD) [{transaction['Date']}]: ").strip()
-            if new_date and not self._validate_date(new_date):
-                print("❌ Invalid date format.")
-                return
-            if new_date:
-                transaction["Date"] = new_date
-
-            new_type = input(
-                f"New Type (Income/Expense) [{transaction['Type']}]: "
-            ).strip()
-            if new_type:
-                if not self._validate_type(new_type):
-                    print("❌ Invalid type.")
-                    return
-                transaction["Type"] = new_type.capitalize()
-
-            new_category = input(f"New Category [{transaction['Category']}]: ").strip()
-            if new_category:
-                transaction["Category"] = new_category.capitalize()
-
-            new_amount = input(f"New Amount [{transaction['Amount']}]: ").strip()
-            if new_amount:
-                if not self._validate_amount(new_amount):
-                    print("❌ Invalid amount.")
-                    return
-                transaction["Amount"] = new_amount
-
-            new_method = input(
-                f"New Payment Method [{transaction['Payment Method']}]: "
-            ).strip()
-            if new_method:
-                if not self._validate_payment_method(new_method):
-                    print("❌ Invalid payment method.")
-                    return
-                transaction["Payment Method"] = new_method.title()
-
-            new_desc = input(
-                f"New Description [{transaction['Description']}]: "
-            ).strip()
-            if new_desc:
-                transaction["Description"] = new_desc
-
-            # Save back to file
-            with open(self.user_csv_path, "w", newline="") as f:
-                writer = csv.DictWriter(f, fieldnames=self.headers)
-                writer.writeheader()
-                writer.writerows(reader)
-
-            print("✅ Transaction updated successfully.")
-
-        except Exception as e:
-            print(f"Error editing transaction: {e}")
-
-    # -------------------- DELETE TRANSACTION --------------------
-    def delete_transaction(self, index):
-        """Delete a transaction by its index (1-based)."""
-        try:
-            with open(self.user_csv_path, "r", newline="") as f:
-                reader = list(csv.DictReader(f))
-
-            if index < 1 or index > len(reader):
-                print("❌ Invalid transaction number.")
-                return
-
-            deleted = reader.pop(index - 1)
-
-            with open(self.user_csv_path, "w", newline="") as f:
-                writer = csv.DictWriter(f, fieldnames=self.headers)
-                writer.writeheader()
-                writer.writerows(reader)
-
+        print("\n--- Transactions ---")
+        for i, row in enumerate(rows, start=1):
             print(
-                f"✅ Deleted transaction: {deleted['Category']} ({deleted['Amount']})"
+                f"{i}. {row['Date']} | {row['Type']} | {row['Category']} | "
+                f"{row['Amount']} | {row['Payment Method']} | {row['Description']}"
             )
 
-        except Exception as e:
-            print(f"Error deleting transaction: {e}")
+    # -------------------- BALANCE FEATURE --------------------
+    def calculate_balance(self):
+        """Calculate total income, total expenses, and net balance."""
+        rows = self._read_transactions()
+        income_total = Decimal("0.00")
+        expense_total = Decimal("0.00")
+
+        for row in rows:
+            try:
+                amount = Decimal(row["Amount"])
+                if row["Type"].lower() == "income":
+                    income_total += amount
+                elif row["Type"].lower() == "expense":
+                    expense_total += amount
+            except (InvalidOperation, KeyError):
+                continue
+
+        balance = income_total - expense_total
+        return income_total, expense_total, balance
+
+    def view_balance(self):
+        """Display current financial summary."""
+        income_total, expense_total, balance = self.calculate_balance()
+
+        print("\n💰 --- Balance Summary ---")
+        print(f"Total Income:  +{income_total}")
+        print(f"Total Expense: -{expense_total}")
+        print(f"------------------------------")
+        if balance >= 0:
+            print(f"Net Balance:   ✅ {balance}")
+        else:
+            print(f"Net Balance:   🔴 {balance}")
+
+    # -------------------- SEARCH TRANSACTIONS --------------------
+    def search_transactions(self, keyword):
+        """Search transactions by keyword in category, payment method, or description."""
+        rows = self._read_transactions()
+        keyword = keyword.lower()
+        results = [
+            row
+            for row in rows
+            if keyword in row["Category"].lower()
+            or keyword in row["Payment Method"].lower()
+            or keyword in row["Description"].lower()
+        ]
+
+        if results:
+            print(f"\n🔎 Search Results for '{keyword}':")
+            for i, row in enumerate(results, start=1):
+                print(
+                    f"{i}. {row['Date']} | {row['Type']} | {row['Category']} | "
+                    f"{row['Amount']} | {row['Payment Method']} | {row['Description']}"
+                )
+        else:
+            print(f"\n❌ No transactions found matching '{keyword}'.")
+
+    # -------------------- FILTER TRANSACTIONS --------------------
+    def filter_transactions(
+        self,
+        t_type=None,
+        category=None,
+        start_date=None,
+        end_date=None,
+        min_amount=None,
+        max_amount=None,
+        payment_method=None,
+    ):
+        """Filter transactions based on multiple criteria."""
+        rows = self._read_transactions()
+
+        def parse_date(d):
+            return datetime.strptime(d, "%Y-%m-%d") if d else None
+
+        start_date = parse_date(start_date)
+        end_date = parse_date(end_date)
+        min_amount = Decimal(min_amount) if min_amount else None
+        max_amount = Decimal(max_amount) if max_amount else None
+
+        results = []
+        for row in rows:
+            try:
+                row_date = parse_date(row["Date"])
+                row_amount = Decimal(row["Amount"])
+
+                if t_type and row["Type"].lower() != t_type.lower():
+                    continue
+                if category and row["Category"].lower() != category.lower():
+                    continue
+                if payment_method and row["Payment Method"].lower() != payment_method.lower():
+                    continue
+                if start_date and row_date < start_date:
+                    continue
+                if end_date and row_date > end_date:
+                    continue
+                if min_amount and row_amount < min_amount:
+                    continue
+                if max_amount and row_amount > max_amount:
+                    continue
+
+                results.append(row)
+            except Exception:
+                continue
+
+        if results:
+            print("\n✅ Filtered Transactions:")
+            for i, row in enumerate(results, start=1):
+                print(
+                    f"{i}. {row['Date']} | {row['Type']} | {row['Category']} | "
+                    f"{row['Amount']} | {row['Payment Method']} | {row['Description']}"
+                )
+        else:
+            print("\n❌ No transactions match your filters.")
