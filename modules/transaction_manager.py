@@ -193,6 +193,31 @@ class TransactionManager:
 
             ############
 
+    # -------------------- DELETE TRANSACTION --------------------
+    def delete_transaction(self, index):
+        """Delete a transaction by its index (1-based)."""
+        try:
+            with open(self.user_csv_path, "r", newline="") as f:
+                reader = list(csv.DictReader(f))
+
+            if index < 1 or index > len(reader):
+                print("❌ Invalid transaction number.")
+                return
+
+            deleted = reader.pop(index - 1)
+
+            with open(self.user_csv_path, "w", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=self.headers)
+                writer.writeheader()
+                writer.writerows(reader)
+
+            print(
+                f"✅ Deleted transaction: {deleted['Category']} ({deleted['Amount']})"
+            )
+
+        except Exception as e:
+            print(f"Error deleting transaction: {e}")
+
     # -------------------- READ TRANSACTIONS --------------------
     def _read_transactions(self):
         try:
