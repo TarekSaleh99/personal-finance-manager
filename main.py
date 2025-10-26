@@ -32,14 +32,15 @@ class FinanceApp:
     def show_transaction_menu(self):
         """Show the transaction menu after login."""
         print(f"\n===== {self.current_user.name}'s Dashboard =====")
-        print("1. Add Transaction")
-        print("2. View Transactions")
-        print("3. Edit Transaction")
-        print("4. Delete Transaction")
-        print("5. Reports 📊")
-        print("6. Search Transactions")
-        print("7. Filter Transactions")
-        print("8. Logout")
+        print("1. View Dashboard/Profile")
+        print("2. Add Transaction")
+        print("3. View Transactions")
+        print("4. Edit Transaction")
+        print("5. Delete Transaction")
+        print("6. Reports 📊")
+        print("7. Search Transactions")
+        print("8. Filter Transactions")
+        print("9. Logout")
 
         choice = input("Choose an option: ").strip()
         while choice not in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
@@ -92,7 +93,7 @@ class FinanceApp:
             if user:
                 self.current_user = user
                 print(f"✅ Logged in as {user.name}.")
-                self.load_user_managers()
+                # self.load_user_managers()
                 self.load_user_data()
                 self.dashboard.show_dashboard()  # Show dashboard immediately
                 self.transaction_loop()
@@ -140,7 +141,13 @@ class FinanceApp:
                 self.transaction_manager.list_transactions()
                 try:
                     index = int(input("\nEnter transaction number to delete: ").strip())
-                    confirm = input("⚠️ Are you sure you want to delete this transaction? (y/n): ").strip().lower()
+                    confirm = (
+                        input(
+                            "⚠️ Are you sure you want to delete this transaction? (y/n): "
+                        )
+                        .strip()
+                        .lower()
+                    )
                     if confirm == "y":
                         self.transaction_manager.delete_transaction(index)
                     else:
@@ -150,15 +157,16 @@ class FinanceApp:
                 except Exception as e:
                     print(f"Error deleting transaction: {e}")
 
-            elif choice == "5":
+            elif choice == "6":
                 self.handle_reports_menu()
 
-            elif choice == "6":
-            elif choice == "6":
+            # elif choice == "6":
+            #
+            elif choice == "7":
                 keyword = input("Enter keyword to search: ").strip()
                 self.transaction_manager.search_transactions(keyword)
 
-            elif choice == "7":
+            elif choice == "8":
                 print("\n--- Apply Filters ---")
                 t_type = input("Type (Income/Expense or leave blank): ").strip()
                 category = input("Category (or leave blank): ").strip()
@@ -178,7 +186,7 @@ class FinanceApp:
                     payment_method or None,
                 )
 
-            elif choice == "8":
+            elif choice == "9":
                 print(f"👋 Logging out {self.current_user.name}...")
                 self.current_user = None
                 break
