@@ -1,5 +1,6 @@
 from modules.user_manager import UserManager
 from modules.transaction_manager import TransactionManager
+from modules.reports_manager import ReportsManager
 import os
 
 
@@ -11,6 +12,7 @@ class FinanceApp:
         self.user_manager = UserManager()
         self.current_user = None
         self.transaction_manager = None
+        self.reports_manager = None
 
     # -------------------- MAIN MENU --------------------
     def show_main_menu(self):
@@ -29,17 +31,34 @@ class FinanceApp:
     # -------------------- TRANSACTION MENU --------------------
     def show_transaction_menu(self):
         """Show the transaction menu after login."""
-        print("\n===== Transaction Menu =====")
+        print(f"\n===== {self.current_user.name}'s Dashboard =====")
         print("1. Add Transaction")
         print("2. View Transactions")
         print("3. Edit Transaction")
         print("4. Delete Transaction")
-        print("5. Logout")
+        print("5. Reports 📊")
+        print("6. Logout")
 
         choice = input("Choose an option: ").strip()
+        while choice not in ["1", "2", "3", "4", "5", "6"]:
+            print("❌ Invalid choice. Please enter 1–6.")
+            choice = input("Choose an option: ").strip()
+        return choice
+
+    # -------------------- REPORTS MENU --------------------
+    def show_reports_menu(self):
+        """Display the reports menu."""
+        print("\n===== Reports Menu =====")
+        print("1. Dashboard Summary")
+        print("2. Monthly Report")
+        print("3. Category Breakdown")
+        print("4. Spending Trends")
+        print("5. Back")
+
+        choice = input("Choose a report: ").strip()
         while choice not in ["1", "2", "3", "4", "5"]:
             print("❌ Invalid choice. Please enter 1–5.")
-            choice = input("Choose an option: ").strip()
+            choice = input("Choose a report: ").strip()
         return choice
 
     # -------------------- MAIN LOOP --------------------
@@ -74,21 +93,23 @@ class FinanceApp:
             if user:
                 self.current_user = user
                 print(f"✅ Logged in as {user.name}.")
-                self.load_user_transactions()
+                self.load_user_managers()
                 self.transaction_loop()
         except Exception as e:
             print(f"Error during login: {e}")
 
-    # -------------------- LOAD USER TRANSACTIONS --------------------
-    def load_user_transactions(self):
-        """Load or create the transaction CSV file for the logged-in user."""
+    # -------------------- LOAD USER FILES --------------------
+    def load_user_managers(self):
+        """Load the transaction CSV and Reports manager for the logged-in user."""
         username = self.current_user.name
         user_id = self.current_user.user_id
         base_dir = "database"
         user_folder = f"{username}_{user_id[:8]}".replace(" ", "_")
-        csv_path = os.path.join(base_dir, user_folder, "transactions.csv")
+        user_dir = os.path.join(base_dir, user_folder)
+        csv_path = os.path.join(user_dir, "transactions.csv")
 
         self.transaction_manager = TransactionManager(csv_path)
+        self.reports_manager = ReportsManager(user_dir)
 
     # -------------------- TRANSACTION LOOP --------------------
     def transaction_loop(self):
@@ -133,8 +154,33 @@ class FinanceApp:
                     print(f"Error deleting transaction: {e}")
 
             elif choice == "5":
+                self.handle_reports_menu()
+
+            elif choice == "6":
                 print(f"👋 Logging out {self.current_user.name}...")
                 self.current_user = None
+                break
+
+    # -------------------- REPORTS HANDLER --------------------
+    def handle_reports_menu(self):
+        """Handle all reports menu actions."""
+        while True:
+            choice = self.show_reports_menu()
+
+            if choice == "1":
+                self.reports_manager.dashboard_summary()
+            elif choice == "2":
+                try:
+                    month = int(input("Enter month (1–12): "))
+                    year = int(input("Enter year (e.g. 2025): "))
+                    self.reports_manager.monthly_report(month, year)
+                except ValueError:
+                    print("❌ Please enter valid numbers for month and year.")
+            elif choice == "3":
+                self.reports_manager.category_breakdown()
+            elif choice == "4":
+                self.reports_manager.spending_trends()
+            elif choice == "5":
                 break
 
 
