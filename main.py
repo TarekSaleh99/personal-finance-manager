@@ -56,11 +56,13 @@ class FinanceApp:
         print("2. Monthly Report")
         print("3. Category Breakdown")
         print("4. Spending Trends")
-        print("5. Back")
+        print("5. Export Transactions to CSV")
+        print("6. Import Transactions from CSV")
+        print("7. Back")
 
         choice = input("Choose a report: ").strip()
-        while choice not in ["1", "2", "3", "4", "5"]:
-            print("❌ Invalid choice. Please enter 1–5.")
+        while choice not in ["1", "2", "3", "4", "5", "6", "7"]:
+            print("❌ Invalid choice. Please enter 1–7.")
             choice = input("Choose a report: ").strip()
         return choice
 
@@ -211,6 +213,10 @@ class FinanceApp:
             elif choice == "4":
                 self.reports_manager.spending_trends()
             elif choice == "5":
+                self.reports_manager.export_to_csv()
+            elif choice == "6":
+                self.reports_manager.import_from_csv()
+            elif choice == "7":
                 break
 
 
