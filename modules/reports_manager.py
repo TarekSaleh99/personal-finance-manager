@@ -1,10 +1,62 @@
 import pandas as pd
 from datetime import datetime
+import os
+import csv
 
 
 class ReportsManager:
-    def __init__(self, user_folder):
-        self.csv_path = f"{user_folder}/transactions.csv"
+    def __init__(self, user_dir):
+        self.user_dir = user_dir
+        self.csv_path = os.path.join(user_dir, "transactions.csv")
+        self.export_dir = os.path.join(user_dir, "exports")
+        os.makedirs(self.export_dir, exist_ok=True)
+
+    # -------------------- EXPORT TO CSV --------------------
+    def export_to_csv(self):
+        """Export transactions to a new CSV file for backup or analysis."""
+        if not os.path.exists(self.csv_path):
+            print("❌ No transaction data found to export.")
+            return
+
+        export_file = os.path.join(self.export_dir, "transactions_export.csv")
+
+        try:
+            with (
+                open(self.csv_path, "r", encoding="utf-8") as infile,
+                open(export_file, "w", encoding="utf-8", newline="") as outfile,
+            ):
+                reader = csv.reader(infile)
+                writer = csv.writer(outfile)
+                for row in reader:
+                    writer.writerow(row)
+
+            print(f"✅ Transactions successfully exported to: {export_file}")
+        except Exception as e:
+            print(f"❌ Error exporting CSV: {e}")
+
+    # -------------------- IMPORT FROM CSV --------------------
+    def import_from_csv(self):
+        """Import transactions from a CSV file (must match columns)."""
+        file_path = input("Enter CSV file path to import: ").strip()
+        if not os.path.exists(file_path):
+            print("❌ File not found.")
+            return
+
+        try:
+            with (
+                open(file_path, "r", encoding="utf-8") as infile,
+                open(self.csv_path, "a", encoding="utf-8", newline="") as outfile,
+            ):
+                reader = csv.reader(infile)
+                writer = csv.writer(outfile)
+
+                next(reader, None)  # Skip header if exists
+                for row in reader:
+                    writer.writerow(row)
+
+            print(f"✅ Transactions imported successfully from: {file_path}")
+        except Exception as e:
+            print(f"❌ Error importing CSV: {e}")
 
     def load_data(self):
         try:
