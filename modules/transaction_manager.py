@@ -120,6 +120,78 @@ class TransactionManager:
 
         except Exception as e:
             print(f"Error adding transaction: {e}")
+            ##########
+            # -------------------- EDIT TRANSACTION --------------------
+
+    def edit_transaction(self, index):
+        """Edit an existing transaction by its index (1-based)."""
+        try:
+            with open(self.user_csv_path, "r", newline="") as f:
+                reader = list(csv.DictReader(f))
+
+            if index < 1 or index > len(reader):
+                print("❌ Invalid transaction number.")
+                return
+
+            transaction = reader[index - 1]
+            print("\n--- Editing Transaction ---")
+            print(f"Current: {transaction}")
+
+            # Input new values (skip empty)
+            new_date = input(f"New Date (YYYY-MM-DD) [{transaction['Date']}]: ").strip()
+            if new_date and not self._validate_date(new_date):
+                print("❌ Invalid date format.")
+                return
+            if new_date:
+                transaction["Date"] = new_date
+
+            new_type = input(
+                f"New Type (Income/Expense) [{transaction['Type']}]: "
+            ).strip()
+            if new_type:
+                if not self._validate_type(new_type):
+                    print("❌ Invalid type.")
+                    return
+                transaction["Type"] = new_type.capitalize()
+
+            new_category = input(f"New Category [{transaction['Category']}]: ").strip()
+            if new_category:
+                transaction["Category"] = new_category.capitalize()
+
+            new_amount = input(f"New Amount [{transaction['Amount']}]: ").strip()
+            if new_amount:
+                if not self._validate_amount(new_amount):
+                    print("❌ Invalid amount.")
+                    return
+                transaction["Amount"] = new_amount
+
+            new_method = input(
+                f"New Payment Method [{transaction['Payment Method']}]: "
+            ).strip()
+            if new_method:
+                if not self._validate_payment_method(new_method):
+                    print("❌ Invalid payment method.")
+                    return
+                transaction["Payment Method"] = new_method.title()
+
+            new_desc = input(
+                f"New Description [{transaction['Description']}]: "
+            ).strip()
+            if new_desc:
+                transaction["Description"] = new_desc
+
+            # Save back to file
+            with open(self.user_csv_path, "w", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=self.headers)
+                writer.writeheader()
+                writer.writerows(reader)
+
+            print("✅ Transaction updated successfully.")
+
+        except Exception as e:
+            print(f"Error editing transaction: {e}")
+
+            ############
 
     # -------------------- READ TRANSACTIONS --------------------
     def _read_transactions(self):
@@ -233,7 +305,10 @@ class TransactionManager:
                     continue
                 if category and row["Category"].lower() != category.lower():
                     continue
-                if payment_method and row["Payment Method"].lower() != payment_method.lower():
+                if (
+                    payment_method
+                    and row["Payment Method"].lower() != payment_method.lower()
+                ):
                     continue
                 if start_date and row_date < start_date:
                     continue
