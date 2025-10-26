@@ -78,6 +78,9 @@ class ReportsManager:
         print(f"Total Spent: {total_spent:.2f}")
         print(f"Average Transaction: {avg_transaction:.2f}")
 
+        # 👉 Call Financial Health Score directly after the summary
+        self.financial_health_score(df)
+
     def monthly_report(self, month, year):
         df = self.load_data()
         if df.empty:
@@ -103,3 +106,46 @@ class ReportsManager:
         trends = df.groupby(df["Date"].dt.to_period("M"))["Amount"].sum()
         print("\n=== Spending Trends (Monthly) ===")
         print(trends)
+
+    # -------------------- FINANCIAL HEALTH SCORE --------------------
+    def financial_health_score(self, df):
+        """Simple financial health score based on income vs expenses ratio."""
+        if "Type" not in df.columns or "Amount" not in df.columns:
+            print("⚠️ Missing necessary columns (Type, Amount).")
+            return
+
+        total_income = df.loc[df["Type"].str.lower() == "income", "Amount"].sum()
+        total_expense = df.loc[df["Type"].str.lower() == "expense", "Amount"].sum()
+
+        print("\n💰 === Financial Health Score ===")
+
+        if total_expense == 0 and total_income == 0:
+            print("No income or expenses recorded yet.")
+            return
+        elif total_expense == 0:
+            print("🟢 Excellent! No expenses recorded yet.")
+            return
+
+        ratio = total_income / total_expense
+
+        if ratio > 2:
+            score = "🟢 Excellent"
+            comment = "You’re saving a lot — great job!"
+        elif ratio > 1.5:
+            score = "🟩 Good"
+            comment = "Your finances are in good shape."
+        elif ratio > 1:
+            score = "🟨 Moderate"
+            comment = "You’re breaking even, try to save more."
+        elif ratio > 0.5:
+            score = "🟧 Poor"
+            comment = "You’re spending too much — watch your expenses."
+        else:
+            score = "🔴 Critical"
+            comment = "You’re broke! Expenses exceed income."
+
+        print(f"Total Income:  {total_income:.2f}")
+        print(f"Total Expense: {total_expense:.2f}")
+        print(f"Income/Expense Ratio: {ratio:.2f}")
+        print(f"Financial Health: {score}")
+        print(f"Comment: {comment}")
