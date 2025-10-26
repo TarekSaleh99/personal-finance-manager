@@ -1,5 +1,6 @@
 from modules.user_manager import UserManager
 from modules.transaction_manager import TransactionManager
+from modules.reports_manager import ReportsManager
 from modules.dashboard_manager import Dashboard
 import os
 
@@ -11,6 +12,7 @@ class FinanceApp:
         self.user_manager = UserManager()
         self.current_user = None
         self.transaction_manager = None
+        self.reports_manager = None
         self.dashboard = None
 
     # -------------------- MAIN MENU --------------------
@@ -28,20 +30,38 @@ class FinanceApp:
 
     # -------------------- TRANSACTION MENU --------------------
     def show_transaction_menu(self):
-        print("\n===== Dashboard & Transactions =====")
+        """Show the transaction menu after login."""
+        print(f"\n===== {self.current_user.name}'s Dashboard =====")
         print("1. View Dashboard/Profile")
         print("2. Add Transaction")
         print("3. View Transactions")
         print("4. Edit Transaction")
         print("5. Delete Transaction")
-        print("6. Search Transactions")
-        print("7. Filter Transactions")
-        print("8. Logout")
+        print("6. Reports 📊")
+        print("7. Search Transactions")
+        print("8. Filter Transactions")
+        print("9. Logout")
 
         choice = input("Choose an option: ").strip()
-        while choice not in [str(i) for i in range(1, 9)]:
-            print("❌ Invalid choice. Please enter a number between 1–8.")
+        while choice not in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+            print("❌ Invalid choice. Please enter 1–9.")
             choice = input("Choose an option: ").strip()
+        return choice
+
+    # -------------------- REPORTS MENU --------------------
+    def show_reports_menu(self):
+        """Display the reports menu."""
+        print("\n===== Reports Menu =====")
+        print("1. Dashboard Summary")
+        print("2. Monthly Report")
+        print("3. Category Breakdown")
+        print("4. Spending Trends")
+        print("5. Back")
+
+        choice = input("Choose a report: ").strip()
+        while choice not in ["1", "2", "3", "4", "5"]:
+            print("❌ Invalid choice. Please enter 1–5.")
+            choice = input("Choose a report: ").strip()
         return choice
 
     # -------------------- MAIN LOOP --------------------
@@ -73,6 +93,7 @@ class FinanceApp:
             if user:
                 self.current_user = user
                 print(f"✅ Logged in as {user.name}.")
+                # self.load_user_managers()
                 self.load_user_data()
                 self.dashboard.show_dashboard()  # Show dashboard immediately
                 self.transaction_loop()
@@ -85,9 +106,11 @@ class FinanceApp:
         user_id = self.current_user.user_id
         base_dir = "database"
         user_folder = f"{username}_{user_id[:8]}".replace(" ", "_")
-        csv_path = os.path.join(base_dir, user_folder, "transactions.csv")
+        user_dir = os.path.join(base_dir, user_folder)
+        csv_path = os.path.join(user_dir, "transactions.csv")
 
         self.transaction_manager = TransactionManager(csv_path)
+        self.reports_manager = ReportsManager(user_dir)
         self.dashboard = Dashboard(username, csv_path)
 
     # -------------------- TRANSACTION LOOP --------------------
@@ -118,7 +141,13 @@ class FinanceApp:
                 self.transaction_manager.list_transactions()
                 try:
                     index = int(input("\nEnter transaction number to delete: ").strip())
-                    confirm = input("⚠️ Are you sure you want to delete this transaction? (y/n): ").strip().lower()
+                    confirm = (
+                        input(
+                            "⚠️ Are you sure you want to delete this transaction? (y/n): "
+                        )
+                        .strip()
+                        .lower()
+                    )
                     if confirm == "y":
                         self.transaction_manager.delete_transaction(index)
                     else:
@@ -129,10 +158,15 @@ class FinanceApp:
                     print(f"Error deleting transaction: {e}")
 
             elif choice == "6":
+                self.handle_reports_menu()
+
+            # elif choice == "6":
+            #
+            elif choice == "7":
                 keyword = input("Enter keyword to search: ").strip()
                 self.transaction_manager.search_transactions(keyword)
 
-            elif choice == "7":
+            elif choice == "8":
                 print("\n--- Apply Filters ---")
                 t_type = input("Type (Income/Expense or leave blank): ").strip()
                 category = input("Category (or leave blank): ").strip()
@@ -152,9 +186,31 @@ class FinanceApp:
                     payment_method or None,
                 )
 
-            elif choice == "8":
+            elif choice == "9":
                 print(f"👋 Logging out {self.current_user.name}...")
                 self.current_user = None
+                break
+
+    # -------------------- REPORTS HANDLER --------------------
+    def handle_reports_menu(self):
+        """Handle all reports menu actions."""
+        while True:
+            choice = self.show_reports_menu()
+
+            if choice == "1":
+                self.reports_manager.dashboard_summary()
+            elif choice == "2":
+                try:
+                    month = int(input("Enter month (1–12): "))
+                    year = int(input("Enter year (e.g. 2025): "))
+                    self.reports_manager.monthly_report(month, year)
+                except ValueError:
+                    print("❌ Please enter valid numbers for month and year.")
+            elif choice == "3":
+                self.reports_manager.category_breakdown()
+            elif choice == "4":
+                self.reports_manager.spending_trends()
+            elif choice == "5":
                 break
 
 
